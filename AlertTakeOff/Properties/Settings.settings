@@ -1,0 +1,27 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="AlertTakeOff.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="StartHours" Type="System.String" Scope="User">
+      <Value Profile="(Default)">23</Value>
+    </Setting>
+    <Setting Name="StopHours" Type="System.String" Scope="User">
+      <Value Profile="(Default)">7</Value>
+    </Setting>
+    <Setting Name="Factor" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="NumberСandles" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">3</Value>
+    </Setting>
+    <Setting Name="ChatId" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1094754497</Value>
+    </Setting>
+    <Setting Name="TGtoken" Type="System.String" Scope="User">
+      <Value Profile="(Default)">5355326205:AAEdL2kxLIav6q9z7I7rbAAcCE6YOFsnR9E</Value>
+    </Setting>
+    <Setting Name="TimeStart" Type="System.String" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
