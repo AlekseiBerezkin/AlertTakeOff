@@ -8,5 +8,7 @@ namespace AlertTakeOff.Model
     {
         public decimal Volume { get; set; }
         public DateTime timeClose { get; set; }
+        public decimal PriceClose { get; set; }
+        public decimal PriceOpen { get; set; }
     }
 }

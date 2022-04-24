@@ -52,7 +52,7 @@ namespace AlertTakeOff
             tbTimeStart.Text = Properties.Settings.Default.TimeStart;
         }
 
-        private void NumericOnlyDC(System.Object sender, TextCompositionEventArgs e)
+        private void NumericOnlyDC(Object sender, TextCompositionEventArgs e)
         {
             e.Handled = IsTextNumericDC(e.Text);
         }

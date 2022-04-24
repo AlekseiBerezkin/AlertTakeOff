@@ -1,11 +1,13 @@
 ﻿using AlertTakeOff.Model;
 using AlertTakeOff.Provider;
 using Binance.Net;
+using Binance.Net.Interfaces;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,13 +16,12 @@ namespace AlertTakeOff
 {
     internal class TimerController
     {
-        Timer timer;
+        static Timer timer;
 
         static Dictionary<string, decimal> mean = new Dictionary<string, decimal>();
         static Dictionary<string,List<Candle>> candles = new Dictionary<string, List<Candle>>();
         static Dictionary<string, Candle> candlesTemp = new Dictionary<string, Candle>();
         static BinanceSocketClient socketClient = new BinanceSocketClient();
-        static DateTime dtOpen= new DateTime();
         static CallResult<UpdateSubscription> socet;
         static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -32,6 +33,7 @@ namespace AlertTakeOff
 
        public async Task Start()
         {
+            callback(0);
             try
             {
                 TelegaBot tg = new TelegaBot();
@@ -41,12 +43,13 @@ namespace AlertTakeOff
 
                 logger.Info("Процесс запущен");
 
-                TimeSpan timeNow = DateTime.UtcNow.TimeOfDay;
-                TimeSpan tStart = new TimeSpan(startHuor, 0, 0);
-                TimeSpan interval = new TimeSpan(24, 0, 0);
+                var timeNow = DateTime.UtcNow.TimeOfDay;
+                var tStart = new TimeSpan(startHuor, 0, 0);
+                var interval = new TimeSpan(24, 2, 0);
                 if (timeNow <= tStart)
                 {
-                    timer = new Timer(callback, null, interval - (tStart - timeNow), interval);
+                    var t = tStart - timeNow;
+                    timer = new Timer(callback, null, t, interval);
                 }
                 else
                 {
@@ -121,9 +124,12 @@ namespace AlertTakeOff
 
                     using (BinanceClient binanceClient = new BinanceClient())
                     {
-                        var res = await binanceClient.Spot.Market.GetKlinesAsync(p, Binance.Net.Enums.KlineInterval.OneMinute, dtStart, dtStop, 1000);
 
-                        foreach (var kline in res.Data)
+                        var res = await GetKlines(p, dtStart, dtStop, binanceClient);
+                        if (res == null)
+                            continue;
+
+                        foreach (var kline in res)
                         {
                             if (kline.Open > kline.Close)
                             {
@@ -148,14 +154,17 @@ namespace AlertTakeOff
                     }
                 }
 
-                StringBuilder str = new StringBuilder();
-                str.Append("Средние значения\n");
+                await tg.sendMessage("Средние значения активов получены");
+                var str = new StringBuilder();
+                str.Append($"Средние значения за интервал с {dtStart.AddHours(3)} по {dtStop.AddHours(3)}\n");
 
                 foreach (var v in mean)
                 {
                     str.Append($"{v.Key} {v.Value}\n");
                 }
-                logger.Info(str);
+
+                logger.Info(str.ToString());
+                await tg.sendMessage(str.ToString());
                 str.Clear();
 
                 foreach (var s in pairs)
@@ -164,49 +173,58 @@ namespace AlertTakeOff
                     candles.Add(s, l);
                     candlesTemp.Add(s, new Candle
                     {
-                        timeClose = DateTime.Now,
+                        timeClose =new DateTime(),
                         Volume = 0
                     });
                 }
 
-                await tg.sendMessage("Средние значения активов получены");
+                
 
-                socet = await socketClient.Spot.SubscribeToKlineUpdatesAsync(pairs, Binance.Net.Enums.KlineInterval.OneMinute, zbs => {
-
-                    candlesTemp[zbs.Data.Symbol].Volume = zbs.Data.Data.QuoteVolume;
-
+                socet = await socketClient.Spot.SubscribeToKlineUpdatesAsync(pairs, Binance.Net.Enums.KlineInterval.OneMinute,async zbs => {
 
                     if (candlesTemp[zbs.Data.Symbol].timeClose != zbs.Data.Data.CloseTime)
                     {
+
                         candles[zbs.Data.Symbol].Add(new Candle
                         {
                             Volume = candlesTemp[zbs.Data.Symbol].Volume,
-                            timeClose = candlesTemp[zbs.Data.Symbol].timeClose
+                            timeClose = candlesTemp[zbs.Data.Symbol].timeClose,
+                            PriceClose = candlesTemp[zbs.Data.Symbol].PriceClose,
+                            PriceOpen = candlesTemp[zbs.Data.Symbol].PriceOpen
                         });
 
                         candlesTemp[zbs.Data.Symbol].timeClose = zbs.Data.Data.CloseTime;
 
-                        if (candles[zbs.Data.Symbol].Count >= 4)
+                        if (candles[zbs.Data.Symbol].Count >= CountCandle)
                         {
-                            if (candles[zbs.Data.Symbol].Count > 4)
+                            if (candles[zbs.Data.Symbol].Count > CountCandle)
                                 candles[zbs.Data.Symbol].RemoveAt(0);
 
-                            Task.Run(async () => {
-
-                                for (int i = 0; i < candles[zbs.Data.Symbol].Count; i++)
+                            for (int i = 0; i < candles[zbs.Data.Symbol].Count; i++)
                                 {
-                                    if (candles[zbs.Data.Symbol][i].Volume < mean[zbs.Data.Symbol])
+                                    if (candles[zbs.Data.Symbol][i].Volume < mean[zbs.Data.Symbol] || candles[zbs.Data.Symbol][i].Volume==0 || candles[zbs.Data.Symbol][i].PriceOpen== candles[zbs.Data.Symbol][i].PriceClose)
                                         break;
 
-                                    if (i == candles[zbs.Data.Symbol].Count - 1 && candles[zbs.Data.Symbol][i].Volume < mean[zbs.Data.Symbol])
+                                    if (i == candles[zbs.Data.Symbol].Count - 1 && candles[zbs.Data.Symbol][i].Volume >= mean[zbs.Data.Symbol])
                                     {
+                                        var green = candles[zbs.Data.Symbol].Where(p => p.PriceOpen>p.PriceClose);
+
+                                        if (green.Count() != 0)
+                                            break;
+
                                         TelegaBot bot = new TelegaBot();
                                         await bot.sendAlert(zbs.Data.Symbol,mean[zbs.Data.Symbol],Properties.Settings.Default.NumberСandles);
                                         logger.Info($"Сформирован заданный патерн:{zbs.Data.Symbol} среднее значение объема {mean[zbs.Data.Symbol]}");
                                     }
                                 }
-                            });
+
                         }
+                    }
+                    else
+                    {
+                        candlesTemp[zbs.Data.Symbol].Volume = zbs.Data.Data.QuoteVolume;
+                        candlesTemp[zbs.Data.Symbol].PriceOpen = zbs.Data.Data.Open;
+                        candlesTemp[zbs.Data.Symbol].PriceClose = zbs.Data.Data.Close;
                     }
                 });
             }
@@ -216,6 +234,24 @@ namespace AlertTakeOff
                 logger.Error(ex);
             }
             }
+
+        private static async Task<IEnumerable<IBinanceKline>> GetKlines(string name,DateTime timeStart,DateTime timeStop, BinanceClient binanceClient)
+        {
+            try
+            {
+                var res = await binanceClient.Spot.Market.GetKlinesAsync(name, Binance.Net.Enums.KlineInterval.OneMinute, timeStart, timeStop, 1000);
+                return res.Data;
+            }
+            catch (Exception ex)
+            {
+                TelegaBot tg = new TelegaBot();
+                await tg.sendMessage($"Ошибка по токену {name}. Из анализа исключен");
+
+                return null;
+            }
+
+            
+        }
 
         private static int StrToInt(string data)
         {
