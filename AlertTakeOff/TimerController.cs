@@ -19,9 +19,10 @@ namespace AlertTakeOff
         static Timer timer;
 
         static Dictionary<string, decimal> mean = new Dictionary<string, decimal>();
-        static Dictionary<string,List<Candle>> candles = new Dictionary<string, List<Candle>>();
+        static Dictionary<string, Assets> candles = new Dictionary<string, Assets>();
         static Dictionary<string, Candle> candlesTemp = new Dictionary<string, Candle>();
         static BinanceSocketClient socketClient = new BinanceSocketClient();
+        static int silenceInterval = Properties.Settings.Default.SilenceInterval;
         static CallResult<UpdateSubscription> socet;
         static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -38,13 +39,15 @@ namespace AlertTakeOff
             {
                 TelegaBot tg = new TelegaBot();
                 await tg.sendStart();
+                await tg.sendMessage($"Параметры запуска:\n Интервал средних значений: c {Properties.Settings.Default.StartHours}:00 по {Properties.Settings.Default.StopHours}:00\n" +
+                    $"Обновление средних значений: {Properties.Settings.Default.TimeStart}:00\n Множитель: {Properties.Settings.Default.Factor}\n Количество свечей: {Properties.Settings.Default.NumberСandles}");
 
                 int startHuor = int.Parse(Properties.Settings.Default.TimeStart) - 3;
 
                 logger.Info("Процесс запущен");
 
                 var timeNow = DateTime.UtcNow.TimeOfDay;
-                var tStart = new TimeSpan(startHuor, 0, 0);
+                var tStart = new TimeSpan(startHuor, 00, 0);
                 var interval = new TimeSpan(24, 2, 0);
                 if (timeNow <= tStart)
                 {
@@ -68,17 +71,19 @@ namespace AlertTakeOff
         static async private void callback(object o)
         {
 
-            mean.Clear();
-            candles.Clear();
-            candlesTemp.Clear();
-
-            if (socet != null)
-                await socet.Data.CloseAsync();
-
-            TelegaBot tg = new TelegaBot();
-            
             try
             {
+                if (socet != null)
+                    await socet.Data.CloseAsync();
+
+                mean.Clear();
+                candles.Clear();
+                candlesTemp.Clear();
+
+
+
+                TelegaBot tg = new TelegaBot();
+
                 await tg.sendMessage("Получаем данные по свечам");
 
                 mean.Clear();
@@ -170,66 +175,102 @@ namespace AlertTakeOff
                 foreach (var s in pairs)
                 {
                     var l = new List<Candle>();
-                    candles.Add(s, l);
+                    var dt = new DateTime();
+                    dt = DateTime.UtcNow;
+                    //candles.Add(s, l);
                     candlesTemp.Add(s, new Candle
                     {
                         timeClose =new DateTime(),
                         Volume = 0
                     });
+
+                    var asset = new Assets
+                    {
+                        Candles = l,
+                        AlertDateTime = dt
+                    };
+                    candles.Add(s, asset);
+
                 }
 
                 
 
                 socet = await socketClient.Spot.SubscribeToKlineUpdatesAsync(pairs, Binance.Net.Enums.KlineInterval.OneMinute,async zbs => {
 
-                    if (candlesTemp[zbs.Data.Symbol].timeClose != zbs.Data.Data.CloseTime)
+                    if (candles[zbs.Data.Symbol].Candles.Count()==0)
                     {
-
-                        candles[zbs.Data.Symbol].Add(new Candle
+                        Candle c = new Candle
                         {
-                            Volume = candlesTemp[zbs.Data.Symbol].Volume,
-                            timeClose = candlesTemp[zbs.Data.Symbol].timeClose,
-                            PriceClose = candlesTemp[zbs.Data.Symbol].PriceClose,
-                            PriceOpen = candlesTemp[zbs.Data.Symbol].PriceOpen
-                        });
+                            Volume = zbs.Data.Data.QuoteVolume,
+                            timeClose = zbs.Data.Data.CloseTime,
+                            isGreen = zbs.Data.Data.Close > zbs.Data.Data.Open
+                        };
 
-                        candlesTemp[zbs.Data.Symbol].timeClose = zbs.Data.Data.CloseTime;
-
-                        if (candles[zbs.Data.Symbol].Count >= CountCandle)
-                        {
-                            if (candles[zbs.Data.Symbol].Count > CountCandle)
-                                candles[zbs.Data.Symbol].RemoveAt(0);
-
-                            for (int i = 0; i < candles[zbs.Data.Symbol].Count; i++)
-                                {
-                                    if (candles[zbs.Data.Symbol][i].Volume < mean[zbs.Data.Symbol] || candles[zbs.Data.Symbol][i].Volume==0 || candles[zbs.Data.Symbol][i].PriceOpen== candles[zbs.Data.Symbol][i].PriceClose)
-                                        break;
-
-                                    if (i == candles[zbs.Data.Symbol].Count - 1 && candles[zbs.Data.Symbol][i].Volume >= mean[zbs.Data.Symbol])
-                                    {
-                                        var green = candles[zbs.Data.Symbol].Where(p => p.PriceOpen>p.PriceClose);
-
-                                        if (green.Count() != 0)
-                                            break;
-
-                                        TelegaBot bot = new TelegaBot();
-                                        await bot.sendAlert(zbs.Data.Symbol,mean[zbs.Data.Symbol],Properties.Settings.Default.NumberСandles);
-                                        logger.Info($"Сформирован заданный патерн:{zbs.Data.Symbol} среднее значение объема {mean[zbs.Data.Symbol]}");
-                                    }
-                                }
-
-                        }
+                        candles[zbs.Data.Symbol].Candles.Add(c);
                     }
                     else
                     {
-                        candlesTemp[zbs.Data.Symbol].Volume = zbs.Data.Data.QuoteVolume;
-                        candlesTemp[zbs.Data.Symbol].PriceOpen = zbs.Data.Data.Open;
-                        candlesTemp[zbs.Data.Symbol].PriceClose = zbs.Data.Data.Close;
+                        Candle c = new Candle
+                        {
+                            Volume = zbs.Data.Data.QuoteVolume,
+                            timeClose = zbs.Data.Data.CloseTime,
+                            isGreen = zbs.Data.Data.Close > zbs.Data.Data.Open
+                        };
+
+                        if (candles[zbs.Data.Symbol].Candles.Last().timeClose != zbs.Data.Data.CloseTime)
+                        {
+                            
+                            if (candles[zbs.Data.Symbol].Candles.Count >= CountCandle)
+                            {
+                                try
+                                {
+                                    if (candles[zbs.Data.Symbol].Candles.Count > CountCandle)
+                                    {
+                                        candles[zbs.Data.Symbol].Candles.RemoveAt(0);
+                                        //await tg.sendMessage(candles[zbs.Data.Symbol].Last().Volume.ToString());
+                                        for (int i = 0; i < candles[zbs.Data.Symbol].Candles.Count; i++)
+                                        {
+                                            if (candles[zbs.Data.Symbol].Candles[i].Volume < mean[zbs.Data.Symbol] || candles[zbs.Data.Symbol].Candles[i].Volume == 0)
+                                                break;
+
+                                            if (i == candles[zbs.Data.Symbol].Candles.Count - 1 && candles[zbs.Data.Symbol].Candles[i].Volume >= mean[zbs.Data.Symbol])
+                                            {
+                                                var green = candles[zbs.Data.Symbol].Candles.Where(p => !p.isGreen);
+
+                                                if (green.Count() != 0)
+                                                    break;
+
+                                                if (candles[zbs.Data.Symbol].AlertDateTime > zbs.Data.Data.CloseTime)
+                                                    break;
+
+                                                TelegaBot bot = new TelegaBot();
+                                                await bot.sendAlert(zbs.Data.Symbol, mean[zbs.Data.Symbol], Properties.Settings.Default.NumberСandles, factor, candles[zbs.Data.Symbol].Candles);
+                                                Thread.Sleep(250);
+                                                candles[zbs.Data.Symbol].AlertDateTime = DateTime.UtcNow.AddMinutes(silenceInterval);
+                                                logger.Info($"Сформирован заданный патерн:{zbs.Data.Symbol} среднее значение объема {mean[zbs.Data.Symbol]}");
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.Error("Ошибка при анализе и отправке сообщения" + ex);
+                                }
+                            }
+                            candles[zbs.Data.Symbol].Candles.Add(c);
+                        }
+                        else
+                        {
+                            candles[zbs.Data.Symbol].Candles[candles[zbs.Data.Symbol].Candles.Count() - 1] = c;
+                        }
+
                     }
                 });
             }
             catch (Exception ex)
             {
+                TelegaBot tg = new TelegaBot();
+
                 await tg.sendMessage("ОШИБКА: "+ex);
                 logger.Error(ex);
             }

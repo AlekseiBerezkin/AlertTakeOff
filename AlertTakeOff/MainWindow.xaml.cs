@@ -35,6 +35,7 @@ namespace AlertTakeOff
              Properties.Settings.Default.NumberСandles = int.Parse(tbNumberCandle.Text);
              Properties.Settings.Default.ChatId = tbChatId.Text;
              Properties.Settings.Default.TimeStart = tbTimeStart.Text;
+            Properties.Settings.Default.SilenceInterval = int.Parse(tbSilenceInterval.Text);
 
             Properties.Settings.Default.Save();
 
@@ -50,6 +51,7 @@ namespace AlertTakeOff
             tbNumberCandle.Text = Properties.Settings.Default.NumberСandles.ToString();
             tbChatId.Text=Properties.Settings.Default.ChatId;
             tbTimeStart.Text = Properties.Settings.Default.TimeStart;
+            tbSilenceInterval.Text = Properties.Settings.Default.SilenceInterval.ToString();
         }
 
         private void NumericOnlyDC(Object sender, TextCompositionEventArgs e)

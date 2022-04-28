@@ -106,5 +106,17 @@ namespace AlertTakeOff.Properties {
                 this["TimeStart"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int SilenceInterval {
+            get {
+                return ((int)(this["SilenceInterval"]));
+            }
+            set {
+                this["SilenceInterval"] = value;
+            }
+        }
     }
 }

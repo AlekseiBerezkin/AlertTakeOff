@@ -24,6 +24,9 @@
         <Label Content="Обновление средних значений" HorizontalAlignment="Left" Margin="24,114,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="tbTimeStart" HorizontalAlignment="Left" Margin="205,118,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="32" Text="10" PreviewTextInput="NumericOnlyDC"/>
         <Label Content=":00" HorizontalAlignment="Left" Margin="232,114,0,0" VerticalAlignment="Top"/>
+        <Label Content="Интервал тишины" HorizontalAlignment="Left" Margin="36,213,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="tbSilenceInterval" HorizontalAlignment="Left" Margin="146,219,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Text="1.1" PreviewTextInput="NumericOnlyDC"/>
+        <Label Content="мин" HorizontalAlignment="Left" Margin="251,211,0,0" VerticalAlignment="Top" Width="38"/>
 
     </Grid>
 </Window>

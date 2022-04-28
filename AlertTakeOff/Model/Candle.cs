@@ -8,7 +8,13 @@ namespace AlertTakeOff.Model
     {
         public decimal Volume { get; set; }
         public DateTime timeClose { get; set; }
-        public decimal PriceClose { get; set; }
-        public decimal PriceOpen { get; set; }
+        public bool isGreen { get; set; }
+        public DateTime AlertDateTime { get; set; }
+    }
+
+    class Assets
+    {
+        public List<Candle> Candles { get; set; }
+        public DateTime AlertDateTime { get; set; }
     }
 }

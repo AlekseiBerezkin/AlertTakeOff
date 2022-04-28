@@ -1,8 +1,10 @@
-﻿using System;
+﻿using AlertTakeOff.Model;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace AlertTakeOff.Provider
 {
@@ -23,14 +25,24 @@ namespace AlertTakeOff.Provider
             return baseLinkBinance + currency.Replace("USDT", "_USDT");
         }
 
-        public async Task sendAlert(string name, decimal volume, int klineCount)
+        public async Task sendAlert(string name, decimal volume, int klineCount, decimal factor, List<Candle> candles)
         {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("\nВремя закрытия| объем\n");
+
+            foreach (var c in candles)
+            {
+                sb.Append($"{c.timeClose.AddHours(3)}|{c.Volume}\n");
+            }
+
             string []chatIdList = Properties.Settings.Default.ChatId.Split(',');
 
             
             foreach (string chatId in chatIdList)
             {
-                await Bot.SendTextMessageAsync(chatId.ToString(), $"Актив {name} сформировал заданный патерн. Все {klineCount} свечи превысили средний объем в {volume}. Ссылка: {getLink(name)}");
+                await Bot.SendTextMessageAsync(chatId.ToString(), $"Актив #{name} сформировал заданный патерн.\n Все {klineCount} свечи превысили средний объем {volume/factor}.\n Множитель {factor}. Рассчетный объем {volume}.\n {sb}" +
+                    $"[Binance]({getLink(name)})", ParseMode.Markdown, disableWebPagePreview: true);
             }
             
         }
