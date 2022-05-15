@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AlertTakeOff"
         mc:Ignorable="d"
-        Title="SequenceAnalysis" Height="383" Width="328" Loaded="Window_Loaded">
+        Title="SequenceAnalysis" Height="383" Width="807" Loaded="Window_Loaded">
     <Grid>
         <Button x:Name="btnStart" Content="Старт" HorizontalAlignment="Left" Margin="12,10,0,0" VerticalAlignment="Top" Width="42" Click="btnStart_Click"/>
         <Label Content="Интервал статистики" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top"/>
@@ -16,7 +16,7 @@
         <Label Content="Множитель" HorizontalAlignment="Left" Margin="23,137,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="tbFactor" HorizontalAlignment="Left" Margin="102,141,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="32" Text="1.1" PreviewTextInput="NumericOnlyDC"/>
         <Label Content="Количество свечей" HorizontalAlignment="Left" Margin="30,163,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="tbNumberCandle" HorizontalAlignment="Center" Margin="0,164,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="37" Text="1.1" PreviewTextInput="NumericOnly"/>
+        <TextBox x:Name="tbNumberCandle" HorizontalAlignment="Left" Margin="151,163,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="37" Text="1.1" PreviewTextInput="NumericOnly"/>
         <Label Content="Телеграм ChatId" HorizontalAlignment="Left" Margin="36,184,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="tbChatId" HorizontalAlignment="Left" Margin="145,190,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Text="1.1" PreviewTextInput="NumericOnlyDC"/>
         <Label Content=":00" HorizontalAlignment="Left" Margin="54,86,0,0" VerticalAlignment="Top"/>
@@ -27,6 +27,7 @@
         <Label Content="Интервал тишины" HorizontalAlignment="Left" Margin="36,213,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="tbSilenceInterval" HorizontalAlignment="Left" Margin="146,219,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Text="1.1" PreviewTextInput="NumericOnlyDC"/>
         <Label Content="мин" HorizontalAlignment="Left" Margin="251,211,0,0" VerticalAlignment="Top" Width="38"/>
+        <Button x:Name="btnStop" Content="Стоп" HorizontalAlignment="Left" Margin="68,10,0,0" VerticalAlignment="Top" Click="btnStop_Click"/>
 
     </Grid>
 </Window>

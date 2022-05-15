@@ -34,7 +34,7 @@ namespace AlertTakeOff
 
        public async Task Start()
         {
-            callback(0);
+            Callback(0);
             try
             {
                 TelegaBot tg = new TelegaBot();
@@ -52,12 +52,12 @@ namespace AlertTakeOff
                 if (timeNow <= tStart)
                 {
                     var t = tStart - timeNow;
-                    timer = new Timer(callback, null, t, interval);
+                    timer = new Timer(Callback, null, t, interval);
                 }
                 else
                 {
                     TimeSpan del = interval - (timeNow - tStart);
-                    timer = new Timer(callback, null, del, interval);
+                    timer = new Timer(Callback, null, del, interval);
                 }
             }
             catch (Exception ex)
@@ -68,39 +68,52 @@ namespace AlertTakeOff
             }
         }
 
-        static async private void callback(object o)
+        public static async Task Stop()
         {
+            await Reset();
+            await timer.DisposeAsync();
+        }
 
+        private static async Task Reset()
+        {
+            var tg = new TelegaBot();
+
+            if (socet != null)
+                await socet.Data.CloseAsync();
+
+            mean.Clear();
+            candles.Clear();
+            candlesTemp.Clear();
+
+            await tg.sendMessage("Программа остановлена");
+
+        }
+
+        private static async void Callback(object o)
+        {
             try
             {
-                if (socet != null)
-                    await socet.Data.CloseAsync();
+                await Reset();
 
-                mean.Clear();
-                candles.Clear();
-                candlesTemp.Clear();
-
-
-
-                TelegaBot tg = new TelegaBot();
+                var tg = new TelegaBot();
 
                 await tg.sendMessage("Получаем данные по свечам");
 
                 mean.Clear();
 
-                int hStart = StrToInt(Properties.Settings.Default.StartHours)-3;
-                int hStop = StrToInt(Properties.Settings.Default.StopHours)-3;
-                int days = 0;
+                var hStart = StrToInt(Properties.Settings.Default.StartHours)-3;
+                var hStop = StrToInt(Properties.Settings.Default.StopHours)-3;
+                var days = 0;
 
                 if (hStart < 0)
                 {
                     hStart = 24 - hStart;
                     days = 1;
                 }
-                    if (hStop < 0)
+                if (hStop < 0)
                     hStop = 24 - hStop;
 
-                DateTime dtStart = new DateTime(
+                var dtStart = new DateTime(
                             DateTime.Now.Year,
                             DateTime.Now.Month,
                             DateTime.Now.Day,
@@ -109,7 +122,7 @@ namespace AlertTakeOff
 
                 dtStart = dtStart.AddDays(days);
 
-                DateTime dtStop = new DateTime(
+                var dtStop = new DateTime(
                             DateTime.Now.Year,
                             DateTime.Now.Month,
                             DateTime.Now.Day,
@@ -121,42 +134,33 @@ namespace AlertTakeOff
 
                 foreach (var p in pairs)
                 {
-                    int redKline = 0;
                     int greenKline = 0;
                     decimal volume = 0;
-                    int zeroRedNumb = 0;
-                    int zeroGreenNumb = 0;
 
-                    using (BinanceClient binanceClient = new BinanceClient())
+                    using var binanceClient = new BinanceClient();
+                    var res = await GetKlines(p, dtStart, dtStop, binanceClient);
+                    if (res == null)
+                        continue;
+
+                    foreach (var kline in res)
                     {
-
-                        var res = await GetKlines(p, dtStart, dtStop, binanceClient);
-                        if (res == null)
-                            continue;
-
-                        foreach (var kline in res)
+                        if (kline.Open > kline.Close)
                         {
-                            if (kline.Open > kline.Close)
+                            if (kline.QuoteVolume == 0)
                             {
-                                redKline++;
-                                if (kline.QuoteVolume == 0)
-                                {
-                                    zeroRedNumb++;
-                                }
-                            }
-                            else if (kline.Open <= kline.Close)
-                            {
-                                greenKline++;
-                                volume += kline.QuoteVolume;
-                                if (kline.QuoteVolume == 0)
-                                {
-                                    zeroGreenNumb++;
-                                }
                             }
                         }
-
-                        mean.Add(p, factor * Math.Round(((volume) / (greenKline==0 ? 1 : greenKline)), 3));
+                        else if (kline.Open <= kline.Close)
+                        {
+                            greenKline++;
+                            volume += kline.QuoteVolume;
+                            if (kline.QuoteVolume == 0)
+                            {
+                            }
+                        }
                     }
+
+                    mean.Add(p, factor * Math.Round(((volume) / (greenKline==0 ? 1 : greenKline)), 3));
                 }
 
                 await tg.sendMessage("Средние значения активов получены");
@@ -175,8 +179,7 @@ namespace AlertTakeOff
                 foreach (var s in pairs)
                 {
                     var l = new List<Candle>();
-                    var dt = new DateTime();
-                    dt = DateTime.UtcNow;
+                    var dt = DateTime.UtcNow;
                     //candles.Add(s, l);
                     candlesTemp.Add(s, new Candle
                     {
@@ -210,7 +213,7 @@ namespace AlertTakeOff
                     }
                     else
                     {
-                        Candle c = new Candle
+                        var c = new Candle
                         {
                             Volume = zbs.Data.Data.QuoteVolume,
                             timeClose = zbs.Data.Data.CloseTime,

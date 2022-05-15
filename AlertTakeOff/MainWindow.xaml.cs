@@ -40,7 +40,10 @@ namespace AlertTakeOff
             Properties.Settings.Default.Save();
 
             await timerController.Start();
-            
+
+            btnStop.IsEnabled = true;
+            btnStart.IsEnabled = false;
+
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -52,6 +55,7 @@ namespace AlertTakeOff
             tbChatId.Text=Properties.Settings.Default.ChatId;
             tbTimeStart.Text = Properties.Settings.Default.TimeStart;
             tbSilenceInterval.Text = Properties.Settings.Default.SilenceInterval.ToString();
+            btnStop.IsEnabled = false;
         }
 
         private void NumericOnlyDC(Object sender, TextCompositionEventArgs e)
@@ -79,5 +83,12 @@ namespace AlertTakeOff
                 return reg.IsMatch(str);
         }
 
+        private async void btnStop_Click(object sender, RoutedEventArgs e)
+        {
+            await TimerController.Stop();
+
+            btnStop.IsEnabled = false;
+            btnStart.IsEnabled = true;
+        }
     }
 }
