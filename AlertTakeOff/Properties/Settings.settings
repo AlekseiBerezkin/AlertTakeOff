@@ -1,4 +1,4 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="AlertTakeOff.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
@@ -17,8 +17,8 @@
     <Setting Name="ChatId" Type="System.String" Scope="User">
       <Value Profile="(Default)">1094754497</Value>
     </Setting>
-    <Setting Name="TGtoken" Type="System.String" Scope="User">
-      <Value Profile="(Default)">5355326205:AAEdL2kxLIav6q9z7I7rbAAcCE6YOFsnR9E</Value>
+    <Setting Name="TGtokenBTC" Type="System.String" Scope="User">
+      <Value Profile="(Default)">5362207936:AAHl5XJt1JUCN5cthDwksE-9vFko_SPGI2k</Value>
     </Setting>
     <Setting Name="TimeStart" Type="System.String" Scope="User">
       <Value Profile="(Default)">10</Value>
@@ -28,3 +28,4 @@
     </Setting>
   </Settings>
 </SettingsFile>
+

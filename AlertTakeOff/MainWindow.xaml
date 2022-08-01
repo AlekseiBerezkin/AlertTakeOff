@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AlertTakeOff"
         mc:Ignorable="d"
-        Title="SequenceAnalysis" Height="383" Width="807" Loaded="Window_Loaded">
+        Title="SequenceAnalysisBTC" Height="383" Width="807" Loaded="Window_Loaded">
     <Grid>
         <Button x:Name="btnStart" Content="Старт" HorizontalAlignment="Left" Margin="12,10,0,0" VerticalAlignment="Top" Width="42" Click="btnStart_Click"/>
         <Label Content="Интервал статистики" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top"/>

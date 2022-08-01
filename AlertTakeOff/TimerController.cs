@@ -247,7 +247,7 @@ namespace AlertTakeOff
                                                     break;
 
                                                 TelegaBot bot = new TelegaBot();
-                                                await bot.sendAlert(zbs.Data.Symbol, mean[zbs.Data.Symbol], Properties.Settings.Default.NumberСandles, factor, candles[zbs.Data.Symbol].Candles);
+                                                await bot.SendAlert(zbs.Data.Symbol, mean[zbs.Data.Symbol], Properties.Settings.Default.NumberСandles, factor, candles[zbs.Data.Symbol].Candles);
                                                 Thread.Sleep(250);
                                                 candles[zbs.Data.Symbol].AlertDateTime = DateTime.UtcNow.AddMinutes(silenceInterval);
                                                 logger.Info($"Сформирован заданный патерн:{zbs.Data.Symbol} среднее значение объема {mean[zbs.Data.Symbol]}");
@@ -286,7 +286,7 @@ namespace AlertTakeOff
                 var res = await binanceClient.Spot.Market.GetKlinesAsync(name, Binance.Net.Enums.KlineInterval.OneMinute, timeStart, timeStop, 1000);
                 return res.Data;
             }
-            catch (Exception ex)
+            catch 
             {
                 TelegaBot tg = new TelegaBot();
                 await tg.sendMessage($"Ошибка по токену {name}. Из анализа исключен");
