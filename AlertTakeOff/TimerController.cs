@@ -253,7 +253,7 @@ namespace AlertTakeOff
                                                 logger.Info($"Сформирован заданный патерн:{zbs.Data.Symbol} среднее значение объема {mean[zbs.Data.Symbol]}");
                                             }
                                         }
-                                    }
+                                  }
                                 }
                                 catch (Exception ex)
                                 {

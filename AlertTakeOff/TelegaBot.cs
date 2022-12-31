@@ -10,7 +10,7 @@ namespace AlertTakeOff.Provider
 {
     internal class TelegaBot
     {
-        static readonly string BotToken = Properties.Settings.Default.TGtoken;
+        static readonly string BotToken = "5362207936:AAHl5XJt1JUCN5cthDwksE-9vFko_SPGI2k";
         private TelegramBotClient Bot;
 
          public TelegaBot()
